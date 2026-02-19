@@ -1,0 +1,9 @@
+.markInfo {
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px solid black;
+}
+
+.markInfo__option{
+    margin-right: 10px;
+}
