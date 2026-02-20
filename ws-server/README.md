@@ -1,0 +1,1 @@
+Для запуска ws-server.js необходимо зайти в директорию ws-server и написать команду node ws-server.js
