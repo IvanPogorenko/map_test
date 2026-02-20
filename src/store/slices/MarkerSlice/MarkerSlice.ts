@@ -7,22 +7,27 @@ import type {IMarkForm} from "../../../interfaces/IMarkForm.ts";
 export const createMarkerSlice: StateCreator<IMarkerSlice> = (set, get) => {
     return ({
         markers: [],
+        hiddenUsersMarks: [],
         error: null,
+        loading: false,
         getMarkers: async () => {
-            set({error: null});
+            if (get().loading) return;
+            set({error: null, loading: true});
             try {
                 const data = await marksApi.getMarks()
                 set({markers: data})
             } catch (error) {
                 set({error: "Ошибка получения марок"});
                 throw error;
+            } finally {
+                set({loading: false});
             }
         },
         addMarker: async (mark: Omit<IMarkInfo, 'id'>) => {
             set({error: null});
             try {
                 await marksApi.addMark(mark);
-                get().getMarkers();
+                await get().getMarkers();
             } catch (error) {
                 set({error: "Ошибка добавления"});
                 throw error;
@@ -32,7 +37,7 @@ export const createMarkerSlice: StateCreator<IMarkerSlice> = (set, get) => {
             set({error: null});
             try {
                 await marksApi.updateMark(fields, id);
-                get().getMarkers();
+                await get().getMarkers();
             } catch (error) {
                 set({error: 'Ошибка обновления'});
                 throw error;
@@ -42,11 +47,24 @@ export const createMarkerSlice: StateCreator<IMarkerSlice> = (set, get) => {
             set({error: null});
             try {
                 await marksApi.deleteMark(id);
-                get().getMarkers();
+                await get().getMarkers();
             } catch (error) {
                 set({error: "Ошибка удаления"});
                 throw error;
             }
-        }
+        },
+        toggleUser: (userId: number) => {
+            const hidden = get().hiddenUsersMarks;
+            const isHidden = hidden.includes(userId);
+            set({
+                hiddenUsersMarks: isHidden ?
+                    hidden.filter(id => id !== userId) :
+                    [...hidden, userId]
+            });
+        },
+        getUniqueUserIds: () => {
+            const markers = get().markers;
+            return [...new Set(markers.map(m => m.user_id))];
+        },
     });
 }
