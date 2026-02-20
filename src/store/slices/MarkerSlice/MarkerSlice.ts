@@ -3,6 +3,7 @@ import type {IMarkerSlice} from "./IMarkerSlice.ts";
 import {marksApi} from "../../../api/services/marks.ts";
 import type {IMarkInfo} from "../../../interfaces/IMarkInfo.ts";
 import type {IMarkForm} from "../../../interfaces/IMarkForm.ts";
+import {sendMessage} from "../../../api/websocket.ts";
 
 export const createMarkerSlice: StateCreator<IMarkerSlice> = (set, get) => {
     return ({
@@ -27,6 +28,9 @@ export const createMarkerSlice: StateCreator<IMarkerSlice> = (set, get) => {
             set({error: null});
             try {
                 await marksApi.addMark(mark);
+                sendMessage({
+                    type: "marker_created"
+                })
                 await get().getMarkers();
             } catch (error) {
                 set({error: "Ошибка добавления"});
@@ -37,6 +41,10 @@ export const createMarkerSlice: StateCreator<IMarkerSlice> = (set, get) => {
             set({error: null});
             try {
                 await marksApi.updateMark(fields, id);
+                sendMessage({
+                    type: "marker_updated",
+                    id: id,
+                })
                 await get().getMarkers();
             } catch (error) {
                 set({error: 'Ошибка обновления'});
@@ -47,6 +55,10 @@ export const createMarkerSlice: StateCreator<IMarkerSlice> = (set, get) => {
             set({error: null});
             try {
                 await marksApi.deleteMark(id);
+                sendMessage({
+                    type: "marker_deleted",
+                    id: id
+                })
                 await get().getMarkers();
             } catch (error) {
                 set({error: "Ошибка удаления"});
