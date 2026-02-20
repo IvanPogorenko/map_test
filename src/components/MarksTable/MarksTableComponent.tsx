@@ -1,32 +1,58 @@
 import MarkInfoComponent from "./MarkInfo/MarkInfoComponent.tsx";
 import type {IMarkInfo} from "../../interfaces/IMarkInfo.ts";
 import styles from "./MarksTable.module.css";
+import {useStore} from "../../store/useStore.ts";
+import {useEffect} from "react";
+import type {IUser} from "../../interfaces/IUser.ts";
+import MarkFormComponent from "./MarkForm/MarkFormComponent.tsx";
+import {Form} from "antd";
+import type {IMarkForm} from "../../interfaces/IMarkForm.ts";
 
 function MarksTableComponent() {
 
-    const mockMarks: IMarkInfo[] = [
-        {
-            id: 1,
-            color: "purple",
-            longitude: 12.1213,
-            latitude: 12.2134,
-            description: "Описание описание описание описание"
-        },
-        {
-            id: 2,
-            color: "purple",
-            longitude: 10.1213,
-            latitude: 10.2134,
-            description: "Описание описание описание описание"
+    const addMark = useStore((state) => state.addMarker);
+    const markers: IMarkInfo[] = useStore((state) => state.markers);
+    const user: IUser | null = useStore((state) => state.user);
+    const getMarkers = useStore((state) => state.getMarkers);
+
+    const [addForm] = Form.useForm<IMarkForm>();
+
+    const handleCreate = async (values: IMarkForm) => {
+        try {
+            if (user){
+                const newMark: Omit<IMarkInfo, 'id'> = {
+                    ...values,
+                    color: user.color,
+                    user_id: user.id
+                }
+                await addMark(newMark);
+            }
+        } catch (error){
+            console.log(error);
         }
-    ]
+    }
+
+    useEffect(() => {
+        getMarkers();
+    }, [])
+
+    if (!user) {
+        return (
+            <h2>Авторизуйтесь для просмотра своих меток</h2>
+        );
+    }
 
     return (
         <section className={styles.marks}>
             <h2>Ваши метки</h2>
-            {mockMarks.map((mark) => (
-                <MarkInfoComponent key={mark.id} markInfo={mark} />
+            {markers.map((mark) => (
+                user.id === mark.user_id ? <MarkInfoComponent key={mark.id} markInfo={mark} /> : null
             ))}
+            <h2>Добавить метку</h2>
+            <MarkFormComponent
+                form={addForm}
+                onSave={handleCreate}
+            />
         </section>
     );
 }

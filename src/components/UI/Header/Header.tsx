@@ -2,10 +2,12 @@ import styles from "./Header.module.css"
 import {Button, Form, Input, Modal} from "antd";
 import {useState} from "react";
 import type {IAuth} from "../../../interfaces/IAuth.ts";
+import {useStore} from "../../../store/useStore.ts";
 
 function Header() {
 
-    const [user, setUser] = useState<null | string>(null)
+    const user = useStore((state) => state.user);
+    const login = useStore((state) => state.login);
     const [open, setOpen] = useState<boolean>(false);
     const [form] = Form.useForm();
 
@@ -15,9 +17,8 @@ function Header() {
 
     const handleOk = async () => {
         try {
-            const values: IAuth = await form.validateFields()
-            console.log(values)
-            setUser(values.email)
+            const values: IAuth = await form.validateFields();
+            await login(values);
             setOpen(false);
             form.resetFields();
         } catch (error) {
@@ -34,7 +35,7 @@ function Header() {
         <header className={styles.header}>
             {!user
                 ? <Button type={"primary"} onClick={showModal}>Авторизоваться</Button>
-                : <span className={styles.header__greetings}>Добро пожаловать, {user}</span>
+                : <span className={styles.header__greetings}>Добро пожаловать, {user.email}</span>
             }
             <Modal
                 title='Авторизация'
