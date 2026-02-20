@@ -1,13 +1,18 @@
 import type {IMarkInfo} from "../../../interfaces/IMarkInfo.ts";
-import {Button, Form, Input, InputNumber, Popconfirm, Space} from "antd";
+import {Button, Form, Popconfirm, Space} from "antd";
 import {useState} from "react";
 import styles from "./MarkInfo.module.css";
 import type {IMarkForm} from "../../../interfaces/IMarkForm.ts";
+import {useStore} from "../../../store/useStore.ts";
+import MarkFormComponent from "../MarkForm/MarkFormComponent.tsx";
 
 function MarkInfoComponent({markInfo}: {markInfo: IMarkInfo}) {
 
+    const deleteMark = useStore((state) => state.removeMarker);
+    const updateMarker = useStore((state) => state.updateMarker);
+
     const [editView, setEditView] = useState<boolean>(false);
-    const [form] = Form.useForm();
+    const [editForm] = Form.useForm<IMarkForm>();
 
     const changeView = () => {
         setEditView((prevState) => {
@@ -15,64 +20,41 @@ function MarkInfoComponent({markInfo}: {markInfo: IMarkInfo}) {
         });
     }
 
-    const handleSave = async () => {
+    const handleUpdate = async (value: IMarkForm) => {
         try {
-            const value: IMarkForm = await form.validateFields();
-            console.log(value)
+            await updateMarker(value, markInfo.id);
             setEditView(false);
-            form.resetFields();
-            //request
         } catch (error) {
             console.log(error);
         }
     }
 
     const handleCancel = () => {
-        form.resetFields();
         setEditView(false);
     }
 
-    const handleDelete = async () => {
-        console.log(markInfo.id);
-        //request
+    const handleDelete= async () => {
+        try {
+            await deleteMark(markInfo.id);
+        } catch (error) {
+            console.log(error);
+        }
     }
 
     if (editView) {
         return (
             <div className={styles.markInfo}>
-                <Form layout="inline" name="mark_info" form={form}>
-                    <Form.Item
-                        label="Долгота"
-                        name="longitude"
-                        rules={[
-                            {required: true, message: "Не заполнили поле!"},
-                            {type: "number", message: "Не тот формат!"}
-                        ]}>
-                        <InputNumber type="number" value={markInfo.longitude}/>
-                    </Form.Item>
-                    <Form.Item
-                        label="Широта"
-                        name="latitude"
-                        rules={[
-                            {required: true, message: "Не заполнили поле!"},
-                            {type: "number", message: "Не тот формат!"}
-                        ]}>
-                        <InputNumber type="number" value={markInfo.latitude}/>
-                    </Form.Item>
-                    <Form.Item
-                        label="Описание"
-                        name="description"
-                        rules={[
-                            {required: true, message: "Не заполнили поле!"},
-                            {type: "string", message: "Не тот формат!"}
-                        ]}>
-                        <Input type="text" value={markInfo.longitude}/>
-                    </Form.Item>
-                    <Space>
-                        <Button type="primary" htmlType="button" onClick={handleSave}>Сохранить</Button>
-                        <Button type="primary" htmlType="button" onClick={handleCancel}>Отменить</Button>
-                    </Space>
-                </Form>
+                <MarkFormComponent
+                    key={markInfo.id}
+                    form={editForm}
+                    onCancel={handleCancel}
+                    onSave={handleUpdate}
+                    initialValue={{
+                        longitude: markInfo.longitude,
+                        latitude: markInfo.latitude,
+                        description: markInfo.description,
+                    }}
+                />
             </div>
         );
     }
@@ -96,6 +78,7 @@ function MarkInfoComponent({markInfo}: {markInfo: IMarkInfo}) {
                 </Space>
             </div>
         </div>
+
     );
 }
 
